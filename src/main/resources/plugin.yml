@@ -1,0 +1,5 @@
+name: MohiMine
+main: kr.mohi.MohiMine
+author: "MohiPE(물외한인)"
+version: "1.0.0"
+api: ["1.0.0"]
