@@ -54,6 +54,7 @@ public class MohiMine extends PluginBase implements Listener {
 	@Override
 	public void onEnable() {
 		this.loadDB();
+		this.registerCommands();
 		this.mineCalc();
 		MohiMine.instance = this;
 		this.getServer().getPluginManager().registerEvents(this, this);
