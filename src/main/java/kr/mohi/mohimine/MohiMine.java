@@ -32,6 +32,7 @@ import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.ConfigSection;
 import cn.nukkit.utils.TextFormat;
+import cn.nukkit.event.TranslationContainer;
 
 import kr.mohi.mohimine.task.MineTask;
 
@@ -63,7 +64,8 @@ public class MohiMine extends PluginBase implements Listener {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) { // 플레이어가 아니면 무시
+		if (!(sender instanceof Player)) { // 플레이어가 아니면 메세지
+			sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.ingame"));
 			return true;
 		}
 		if (command.getName().equals("mine")) { // /mine 명령어 사용시
