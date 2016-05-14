@@ -19,21 +19,23 @@ package kr.mohi.mohimine;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.PluginCommand;
+import cn.nukkit.command.SimpleCommandMap;
 import cn.nukkit.event.Listener;
+import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.level.Level;
 import cn.nukkit.level.Position;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.ConfigSection;
 import cn.nukkit.utils.TextFormat;
-import cn.nukkit.event.TranslationContainer;
-
 import kr.mohi.mohimine.task.MineTask;
 
 /**
@@ -47,13 +49,15 @@ public class MohiMine extends PluginBase implements Listener {
 	private ConfigSection mineDB, defaultProbability;
 	private HashMap<String, HashMap<String, Position>> queue;
 	private ConfigSection calcedSetting;
+	public static MohiMine instance;
 
 	@Override
 	public void onEnable() {
 		this.loadDB();
 		this.mineCalc();
+		MohiMine.instance = this;
 		this.getServer().getPluginManager().registerEvents(this, this);
-		this.getServer().getScheduler().scheduleRepeatingTask(new MineTask(this),
+		this.getServer().getScheduler().scheduleRepeatingTask(new MineTask(),
 				this.getConfig().getInt("reset-tick", 20 * 60 * 30), true);
 	}
 
@@ -64,8 +68,7 @@ public class MohiMine extends PluginBase implements Listener {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) { // 플레이어가 아니면 메세지
-			sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.ingame"));
+		if (!(sender instanceof Player)) { // 플레이어가 아니면 무시
 			return true;
 		}
 		if (command.getName().equals("mine")) { // /mine 명령어 사용시
@@ -76,27 +79,41 @@ public class MohiMine extends PluginBase implements Listener {
 			}
 			if (args[0].equals("pos1")) {
 				this.setPos1(player);
+				this.message(player, "Pos1 설정되었습니다.");
 				return true;
 			}
 			if (args[0].equals("pos2")) {
 				this.setPos2(player);
+				this.message(sender, "Pos2 설정되었습니다.");
 				return true;
 			}
 			if (args[0].equals("set")) {
 				if (args[1] == null)
 					return false;
-				this.setMine(player, args[1]);
+				if (!(this.setMine(player, args[1])))
+					this.message(player, "같은 이름의 광산이 이미 존재합니다.");
+				this.message(sender, "광산이 설정되었습니다.");
 				return true;
 			}
 			if (args[0].equals("del")) {
 				if (args[1] == null)
 					return false;
 				this.delMine(args[1]);
+				this.message(sender, "광산이 삭제되었습니다.");
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		if (this.queue.containsKey(event.getPlayer().getName()))
+			this.queue.remove(event.getPlayer().getName());
+	}
+
+	public static MohiMine getInstance() {
+		return MohiMine.instance;
 	}
 
 	/**
@@ -108,13 +125,52 @@ public class MohiMine extends PluginBase implements Listener {
 		return this.mineDB.getKeys();
 	}
 
+	public Map<String, Integer> getMinePos(String name) {
+		Map<String, Integer> mine = new HashMap<String, Integer>();
+		String[] pos1 = this.mineDB.getSection(name).getString("pos1").split(":");
+		String[] pos2 = this.mineDB.getSection(name).getString("pos2").split(":");
+		int pos1X = Integer.parseInt(pos1[1]);
+		int pos1Y = Integer.parseInt(pos1[2]);
+		int pos1Z = Integer.parseInt(pos1[3]);
+		int pos2X = Integer.parseInt(pos2[1]);
+		int pos2Y = Integer.parseInt(pos2[2]);
+		int pos2Z = Integer.parseInt(pos2[3]);
+
+		if (pos1X < pos2X) {
+			mine.put("startX", pos1X);
+			mine.put("endX", pos2X);
+		} else {
+			mine.put("startX", pos2X);
+			mine.put("endX", pos1X);
+		}
+
+		if (pos1Y < pos2Y) {
+			mine.put("startX", pos1Y);
+			mine.put("endX", pos2Y);
+		} else {
+			mine.put("startX", pos2Y);
+			mine.put("endX", pos1Y);
+		}
+
+		if (pos1Z < pos2Z) {
+			mine.put("startX", pos1Z);
+			mine.put("endX", pos2Z);
+		} else {
+			mine.put("startX", pos2Z);
+			mine.put("endX", pos1Z);
+		}
+
+		mine.put("level", Integer.parseInt(pos1[0]));
+		return mine;
+	}
+
 	/**
 	 * Set pos1
 	 * 
 	 * @param player
 	 */
 	@SuppressWarnings("serial")
-	public void setPos1(final Player player) {
+	private void setPos1(final Player player) {
 		this.queue.put(player.getName(), new HashMap<String, Position>() {
 			{
 				put("pos1", player.getPosition());
@@ -138,22 +194,29 @@ public class MohiMine extends PluginBase implements Listener {
 
 	/**
 	 * 
+	 * 
 	 * @param player
 	 * @param name
+	 * @return
 	 */
-	public void setMine(Player player, String name) {
+	public Boolean setMine(Player player, String name) {
 		LinkedHashMap<String, Object> value = new LinkedHashMap<String, Object>();
 		Position pos1 = this.queue.get(player).get("pos1");
 		Position pos2 = this.queue.get(player).get("pos2");
 		if (pos1 == null || pos2 == null) {
-			return;
+			return false;
 		}
-		value.put("pos1", pos1.level.getId() + ":" + pos1.x + ":" + pos1.y + ":" + pos1.z);
-		value.put("pos2", pos2.level.getId() + ":" + pos2.x + ":" + pos2.y + ":" + pos2.z);
+		if (this.mineDB.containsKey(name)) {
+			return false;
+		}
 		ConfigSection mine = new ConfigSection(value);
+		mine.put("pos1", pos1.level.getId() + ":" + pos1.x + ":" + pos1.y + ":" + pos1.z);
+		mine.put("pos2", pos2.level.getId() + ":" + pos2.x + ":" + pos2.y + ":" + pos2.z);
+		mine.put("probability", this.calcedSetting);
 		this.mineDB.put(name, mine);
 		this.saveDB(true);
-		this.getServer().getScheduler().scheduleAsyncTask(new MineTask(this));
+		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
+		return true;
 	}
 
 	/**
@@ -171,7 +234,7 @@ public class MohiMine extends PluginBase implements Listener {
 		ConfigSection mine = new ConfigSection(value);
 		this.mineDB.put(name, mine);
 		this.saveDB(true);
-		this.getServer().getScheduler().scheduleAsyncTask(new MineTask(this));
+		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 
 	}
 
@@ -225,9 +288,9 @@ public class MohiMine extends PluginBase implements Listener {
 
 	/**
 	 * 
-	 * @param level
+	 * @param name
 	 */
-	public void initMine(String name) {
+	public static void initMine(String name) {
 
 	}
 
@@ -252,6 +315,26 @@ public class MohiMine extends PluginBase implements Listener {
 		Config mineDB = new Config(this.getDataFolder() + "/mine.json", Config.JSON, new ConfigSection());
 		mineDB.setAll(this.mineDB);
 		mineDB.save(async);
+	}
+
+	/**
+	 * 
+	 * @param name
+	 * @param descript
+	 * @param usage
+	 * @param permission
+	 */
+	public void registerCommand(String name, String descript, String usage, String permission) {
+		SimpleCommandMap commandMap = getServer().getCommandMap();
+		PluginCommand<MohiMine> command = new PluginCommand<MohiMine>(name, this);
+		command.setDescription(descript);
+		command.setUsage(usage);
+		command.setPermission(permission);
+		commandMap.register(name, command);
+	}
+
+	public void registerCommands() {
+
 	}
 
 	/**

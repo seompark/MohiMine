@@ -28,16 +28,10 @@ import kr.mohi.mohimine.MohiMine;
  */
 public class MineTask extends AsyncTask {
 
-	private MohiMine plugin;
-
-	public MineTask(MohiMine plugin) {
-		this.plugin = plugin;
-	}
-
 	@Override
 	public void onRun() {
-		for(String name : this.plugin.getMineNames()) {
-			this.plugin.initMine(name);
+		for(String name : MohiMine.getInstance().getMineNames()) {
+			MohiMine.initMine(name);
 		}
 	}
 }
