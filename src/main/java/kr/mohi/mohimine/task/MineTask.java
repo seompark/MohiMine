@@ -30,8 +30,6 @@ public class MineTask extends AsyncTask {
 
 	@Override
 	public void onRun() {
-		for(String name : MohiMine.getInstance().getMineNames()) {
-			MohiMine.initMine(name);
-		}
+		MohiMine.getInstance().getMineNames().forEach(name -> MohiMine.initMine(name));
 	}
 }

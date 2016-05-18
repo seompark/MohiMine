@@ -1,5 +1,17 @@
 name: MohiMine
-main: kr.mohi.MohiMine
-author: "MohiPE(¹°¿ÜÇÑÀÎ)"
+main: kr.mohi.mohimine.MohiMine
+author: "MohiPE(ë¬¼ì™¸í•œì¸)"
 version: "1.0.0"
 api: ["1.0.0"]
+permissions:
+ mohimine.command.*:
+  default: OP
+  children:
+   mohimine.command.pos:
+    default: OP
+   mohimine.command.set:
+    default: OP
+   mohimine.command.del:
+    default: OP
+ mohimine.mining:
+  default: true
