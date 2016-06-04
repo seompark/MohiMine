@@ -254,8 +254,8 @@ public class MohiMine extends PluginBase implements Listener {
 		mine.put("pos2", pos2.level.getFolderName() + ":" + (int) pos2.x + ":" + (int) pos2.y + ":" + (int) pos2.z);
 		mine.put("probability", this.defaultProbability);
 		this.mineDB.put(name, mine);
-		this.mineCalc();
 		this.saveDB(true);
+		this.mineCalc();
 		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 		return TextFormat.BLUE + "[MohiMine]" + " " + "성공적으로 광산을 설정했습니다.";
 
@@ -294,8 +294,8 @@ public class MohiMine extends PluginBase implements Listener {
 		ConfigSection calcedSetting = new ConfigSection();
 		this.mineDB.getKeys().forEach(key -> {
 			calcedSetting.put(key, new ConfigSection());
-			this.mineDB.getSection(key).getSection("probability").getKeys().forEach(block -> {
-				String[] exploded = this.mineDB.getSection(key).getSection("probability").getString(block).split("/");
+			this.mineDB.getSections(key).getSections("probability").getKeys().forEach(block -> {
+				String[] exploded = this.mineDB.getSections(key).getSections("probability").getString(block).split("/");
 				calcedSetting.getSection(key).put(block,
 						Math.round(Integer.parseInt(exploded[1]) / Integer.parseInt(exploded[0])));
 			});
