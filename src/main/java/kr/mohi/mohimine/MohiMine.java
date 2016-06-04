@@ -18,7 +18,6 @@
 package kr.mohi.mohimine;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -50,9 +49,9 @@ import kr.mohi.mohimine.task.MineTask;
  */
 public class MohiMine extends PluginBase implements Listener {
 
-	private ConfigSection mineDB, defaultProbability;
+	private ConfigSection mineDB = new ConfigSection(), defaultProbability = new ConfigSection();
 	private Map<String, Position> queue = new HashMap<String, Position>();
-	private ConfigSection calcedSetting;
+	private ConfigSection calcedSetting = new ConfigSection();
 	public static MohiMine instance;
 
 	@Override
@@ -60,8 +59,8 @@ public class MohiMine extends PluginBase implements Listener {
 		this.getDataFolder().mkdirs();
 		this.loadDB();
 		this.registerCommands();
-		this.mineCalc();
 		MohiMine.instance = this;
+		this.mineCalc();
 		this.getServer().getPluginManager().registerEvents(this, this);
 		this.getServer().getScheduler().scheduleRepeatingTask(new MineTask(),
 				this.getConfig().getInt("reset-tick", 20 * 60 * 30), true);
@@ -81,7 +80,7 @@ public class MohiMine extends PluginBase implements Listener {
 		if (command.getName().equals("mine")) {
 			Player player = this.getServer().getPlayer(sender.getName());
 
-			if (args[0] == null) {
+			if (args.length < 1) {
 				this.alert(sender, "/mine <pos1|pos2|set|del>");
 				return true;
 			}
@@ -181,7 +180,7 @@ public class MohiMine extends PluginBase implements Listener {
 			mine.put("endX", pos1Z);
 		}
 
-		mine.put("levelID", Integer.parseInt(pos1[0]));
+		mine.put("level", Integer.parseInt(pos1[0]));
 		return mine;
 	}
 
@@ -214,20 +213,20 @@ public class MohiMine extends PluginBase implements Listener {
 		if (this.mineDB.containsKey(name)) {
 			return TextFormat.RED + "[MohiMine]" + " " + "이미 존재하는 광산 입니다.";
 		}
-		LinkedHashMap<String, Object> value = new LinkedHashMap<String, Object>();
 		Position pos1 = this.queue.get(player.getName() + "pos1");
 		Position pos2 = this.queue.get(player.getName() + "pos2");
-		if (!(pos1.getLevel().getId() == pos2.getLevel().getId())) {
+		if (!(pos1.getLevel().getFolderName().equals(pos2.getLevel().getFolderName()))) {
 			return TextFormat.RED + "[MohiMine]" + " " + "잘못된 위치입니다.";
 		}
 		if (pos1 == null || pos2 == null) {
 			return TextFormat.RED + "[MohiMine]" + " " + "pos1 또는 pos2가 설정되어있지 않습니다.";
 		}
-		ConfigSection mine = new ConfigSection(value);
-		mine.put("pos1", pos1.level.getId() + ":" + pos1.x + ":" + pos1.y + ":" + pos1.z);
-		mine.put("pos2", pos2.level.getId() + ":" + pos2.x + ":" + pos2.y + ":" + pos2.z);
+		ConfigSection mine = new ConfigSection();
+		mine.put("pos1", pos1.level.getFolderName() + ":" + (int) pos1.x + ":" + (int) pos1.y + ":" + (int) pos1.z);
+		mine.put("pos2", pos2.level.getFolderName() + ":" + (int) pos2.x + ":" + (int) pos2.y + ":" + (int) pos2.z);
 		mine.put("probability", this.calcedSetting);
 		this.mineDB.put(name, mine);
+		this.mineCalc();
 		this.saveDB(true);
 		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 		return TextFormat.BLUE + "[MohiMine]" + " " + "성공적으로 광산을 설정했습니다.";
@@ -241,7 +240,7 @@ public class MohiMine extends PluginBase implements Listener {
 	 * @return
 	 */
 	public String setMine(Position pos1, Position pos2, String name) {
-		if (!(pos1.getLevel().getId() == pos2.getLevel().getId())) {
+		if (!(pos1.getLevel().getFolderName().equals(pos2.getLevel().getFolderName()))) {
 			return TextFormat.RED + "[MohiMine]" + " " + "잘못된 위치입니다.";
 		}
 		if (this.mineDB.containsKey(name)) {
@@ -250,11 +249,12 @@ public class MohiMine extends PluginBase implements Listener {
 		if (pos1 == null || pos2 == null) {
 			return TextFormat.RED + "[MohiMine]" + " " + "pos1 또는 pos2가 설정되어있지 않습니다.";
 		}
-		LinkedHashMap<String, Object> value = new LinkedHashMap<String, Object>();
-		value.put("pos1", pos1.level.getId() + ":" + pos1.x + ":" + pos1.y + ":" + pos1.z);
-		value.put("pos2", pos2.level.getId() + ":" + pos2.x + ":" + pos2.y + ":" + pos2.z);
-		ConfigSection mine = new ConfigSection(value);
+		ConfigSection mine = new ConfigSection();
+		mine.put("pos1", pos1.level.getFolderName() + ":" + (int) pos1.x + ":" + (int) pos1.y + ":" + (int) pos1.z);
+		mine.put("pos2", pos2.level.getFolderName() + ":" + (int) pos2.x + ":" + (int) pos2.y + ":" + (int) pos2.z);
+		mine.put("probability", this.defaultProbability);
 		this.mineDB.put(name, mine);
+		this.mineCalc();
 		this.saveDB(true);
 		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 		return TextFormat.BLUE + "[MohiMine]" + " " + "성공적으로 광산을 설정했습니다.";
@@ -291,13 +291,16 @@ public class MohiMine extends PluginBase implements Listener {
 	}
 
 	public void mineCalc() {
-		Set<String> index = this.defaultProbability.getKeys();
-		LinkedHashMap<String, Object> value = new LinkedHashMap<String, Object>();
-		ConfigSection calcedSetting = new ConfigSection(value);
-		for (String item : index) {
-			String[] exploded = item.split("/");
-			calcedSetting.put(item, Math.round(Integer.parseInt(exploded[1]) / Integer.parseInt(exploded[0])));
-		}
+		ConfigSection calcedSetting = new ConfigSection();
+		this.mineDB.getKeys().forEach(key -> {
+			calcedSetting.put(key, new ConfigSection());
+			this.mineDB.getSection(key).getSection("probability").getKeys().forEach(block -> {
+				String[] exploded = this.mineDB.getSection(key).getSection("probability").getString(block).split("/");
+				calcedSetting.getSection(key).put(block,
+						Math.round(Integer.parseInt(exploded[1]) / Integer.parseInt(exploded[0])));
+			});
+			;
+		});
 		this.calcedSetting = calcedSetting;
 	}
 
