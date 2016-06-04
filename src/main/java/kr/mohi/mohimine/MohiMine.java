@@ -227,7 +227,7 @@ public class MohiMine extends PluginBase implements Listener {
 		mine.put("probability", this.calcedSetting);
 		this.mineDB.put(name, mine);
 		this.mineCalc();
-		this.saveDB(true);
+		this.saveDB(false);
 		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 		return TextFormat.BLUE + "[MohiMine]" + " " + "성공적으로 광산을 설정했습니다.";
 	}
@@ -255,7 +255,7 @@ public class MohiMine extends PluginBase implements Listener {
 		mine.put("probability", this.defaultProbability);
 		this.mineDB.put(name, mine);
 		this.mineCalc();
-		this.saveDB(true);
+		this.saveDB(false);
 		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 		return TextFormat.BLUE + "[MohiMine]" + " " + "성공적으로 광산을 설정했습니다.";
 
