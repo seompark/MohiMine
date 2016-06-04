@@ -350,7 +350,7 @@ public class MohiMine extends PluginBase implements Listener {
 		this.saveDefaultConfig();
 		this.mineDB = new Config(this.getDataFolder() + "/mine.json", Config.JSON, new ConfigSection()).getSections();
 		this.saveResource("default-probability.yml", false);
-		this.defaultProbability = new Config(this.getDataFolder() + "/default-probability.yml", Config.YAML)
+		this.defaultProbability = new Config(this.getDataFolder() + "/dprobability.yml", Config.YAML)
 				.getSections();
 	}
 
