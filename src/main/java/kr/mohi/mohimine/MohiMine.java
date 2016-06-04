@@ -254,8 +254,8 @@ public class MohiMine extends PluginBase implements Listener {
 		mine.put("pos2", pos2.level.getFolderName() + ":" + (int) pos2.x + ":" + (int) pos2.y + ":" + (int) pos2.z);
 		mine.put("probability", this.defaultProbability);
 		this.mineDB.put(name, mine);
-		this.saveDB(true);
 		this.mineCalc();
+		this.saveDB(true);
 		this.getServer().getScheduler().scheduleAsyncTask(new MineTask());
 		return TextFormat.BLUE + "[MohiMine]" + " " + "성공적으로 광산을 설정했습니다.";
 
