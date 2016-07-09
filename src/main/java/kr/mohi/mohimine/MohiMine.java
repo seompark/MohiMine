@@ -78,24 +78,24 @@ public class MohiMine extends PluginBase implements Listener {
 			sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.ingame"));
 			return true;
 		}
-		if (command.getName().equals("mine")) {
+		if (command.getName().equalsIgnoreCase("mine")) {
 			Player player = this.getServer().getPlayer(sender.getName());
 
 			if (args.length < 1) {
 				this.alert(sender, "/mine <pos1|pos2|set|del>");
 				return true;
 			}
-			if (args[0].toLowerCase().equals("pos1")) {
+			if (args[0].equalsIgnoreCase("pos1")) {
 				this.setPos1(player);
 				this.message(player, "Pos1을 설정하였습니다.");
 				return true;
 			}
-			if (args[0].toLowerCase().equals("pos2")) {
+			if (args[0].equalsIgnoreCase("pos2")) {
 				this.setPos2(player);
 				this.message(sender, "Pos2를 설정하였습니다.");
 				return true;
 			}
-			if (args[0].toLowerCase().equals("set")) {
+			if (args[0].equalsIgnoreCase("set")) {
 				if (args[1] == null) {
 					this.alert(sender, "/mine set <광산 이름>");
 					return true;
@@ -103,7 +103,7 @@ public class MohiMine extends PluginBase implements Listener {
 				this.plainMessage(sender, this.setMine(player, args[1]));
 				return true;
 			}
-			if (args[0].equals("del")) {
+			if (args[0].equalsIgnoreCase("del")) {
 				if (args[1] == null) {
 					this.alert(sender, "/mine del <광산 이름>");
 					return true;
@@ -216,7 +216,7 @@ public class MohiMine extends PluginBase implements Listener {
 		}
 		Position pos1 = this.queue.get(player.getName() + "pos1");
 		Position pos2 = this.queue.get(player.getName() + "pos2");
-		if (!(pos1.getLevel().getFolderName().equals(pos2.getLevel().getFolderName()))) {
+		if (!(pos1.getLevel().getFolderName().equalsIgnoreCase(pos2.getLevel().getFolderName()))) {
 			return TextFormat.RED + "[MohiMine]" + " " + "잘못된 위치입니다.";
 		}
 		if (pos1 == null || pos2 == null) {
@@ -241,7 +241,7 @@ public class MohiMine extends PluginBase implements Listener {
 	 * @return
 	 */
 	public String setMine(Position pos1, Position pos2, String name) {
-		if (!(pos1.getLevel().getFolderName().equals(pos2.getLevel().getFolderName()))) {
+		if (!(pos1.getLevel().getFolderName().equalsIgnoreCase(pos2.getLevel().getFolderName()))) {
 			return TextFormat.RED + "[MohiMine]" + " " + "잘못된 위치입니다.";
 		}
 		if (this.mineDB.containsKey(name)) {
