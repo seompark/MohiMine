@@ -17,6 +17,7 @@
 
 package kr.mohi.mohimine;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -134,7 +135,7 @@ public class MohiMine extends PluginBase implements Listener {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param name
 	 * @return
 	 */
@@ -305,7 +306,7 @@ public class MohiMine extends PluginBase implements Listener {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param name
 	 * @return
 	 */
@@ -348,9 +349,9 @@ public class MohiMine extends PluginBase implements Listener {
 
 	public void loadDB() {
 		this.saveDefaultConfig();
-		this.mineDB = new Config(this.getDataFolder() + "/mine.json", Config.JSON, new ConfigSection()).getSections();
+		this.mineDB = new Config(new File(this.getDataFolder(), "mine.json"), Config.JSON, new ConfigSection()).getSections();
 		this.saveResource("probability.yml", false);
-		this.defaultProbability = new Config(this.getDataFolder() + "/probability.yml", Config.YAML)
+		this.defaultProbability = new Config(new File(this.getDataFolder(), "probability.yml"), Config.YAML)
 				.getSections();
 	}
 
@@ -364,7 +365,7 @@ public class MohiMine extends PluginBase implements Listener {
 	 * @param async
 	 */
 	public void saveDB(Boolean async) {
-		Config mineDB = new Config(this.getDataFolder() + "/mine.json", Config.JSON, new ConfigSection());
+		Config mineDB = new Config(new File(this.getDataFolder(), "mine.json"), Config.JSON, new ConfigSection());
 		mineDB.setAll(this.mineDB);
 		mineDB.save(async);
 	}
@@ -408,7 +409,7 @@ public class MohiMine extends PluginBase implements Listener {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param player
 	 * @param message
 	 */
